@@ -159,3 +159,28 @@ export function useAuditLogs(params?: { skip?: number; limit?: number }) {
   });
 }
 
+// Statistics
+export function useDashboardStats() {
+  return useQuery({
+    queryKey: ["stats", "dashboard"],
+    queryFn: () => api.stats.dashboard(),
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+}
+
+export function useTenantStats() {
+  return useQuery({
+    queryKey: ["stats", "tenant"],
+    queryFn: () => api.stats.tenant(),
+    refetchInterval: 30000,
+  });
+}
+
+export function useSystemHealth() {
+  return useQuery({
+    queryKey: ["stats", "health"],
+    queryFn: () => api.stats.health(),
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+}
+

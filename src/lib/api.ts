@@ -146,5 +146,30 @@ export const api = {
     list: (params?: { skip?: number; limit?: number }) =>
       apiClient.get(`/audit?skip=${params?.skip || 0}&limit=${params?.limit || 50}`),
   },
+
+  // Statistics
+  stats: {
+    dashboard: () => apiClient.get<{
+      total_tenants: number;
+      active_tenants: number;
+      total_users: number;
+      active_users: number;
+      total_clients: number;
+      total_aum: number;
+      formatted_aum: string;
+    }>("/stats/dashboard"),
+    tenant: () => apiClient.get<{
+      total_users: number;
+      active_users: number;
+      total_clients: number;
+      total_aum: number;
+      formatted_aum: string;
+    }>("/stats/tenant"),
+    health: () => apiClient.get<{
+      api_server: string;
+      database: string;
+      background_jobs: string;
+    }>("/stats/health"),
+  },
 };
 
