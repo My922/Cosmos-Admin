@@ -1,10 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Building2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Loader2, Building2, MoreHorizontal, Pencil, Trash2, Settings, Power, AlertTriangle } from "lucide-react";
 import { useTenants } from "@/hooks/use-api";
+import { TenantDialog, DeleteTenantDialog } from "@/components/tenants";
 
 interface Tenant {
   id: string;
@@ -19,8 +28,37 @@ interface Tenant {
 
 export default function TenantsPage() {
   const { data: tenants, isLoading, error } = useTenants();
+  
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<"deactivate" | "permanent">("deactivate");
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
   const tenantList = (tenants as Tenant[]) || [];
+
+  const handleEdit = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeactivate = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setDeleteMode("deactivate");
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeletePermanent = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setDeleteMode("permanent");
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSettings = (tenant: Tenant) => {
+    // TODO: Navigate to tenant settings page
+    console.log("Settings for:", tenant.slug);
+  };
 
   return (
     <div className="space-y-6">
@@ -31,7 +69,7 @@ export default function TenantsPage() {
             Manage EAM firms and their configurations
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Tenant
         </Button>
@@ -51,7 +89,7 @@ export default function TenantsPage() {
         <CardHeader>
           <CardTitle>All Tenants</CardTitle>
           <CardDescription>
-            {tenantList.length} registered EAM firm{tenantList.length !== 1 ? 's' : ''}
+            {tenantList.length} registered EAM firm{tenantList.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,34 +105,107 @@ export default function TenantsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {tenantList.map((tenant) => (
                 <div
                   key={tenant.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{tenant.name}</span>
-                      <Badge variant={tenant.is_active ? "default" : "secondary"}>
-                        {tenant.is_active ? "Active" : "Inactive"}
-                      </Badge>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold">
+                      {tenant.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Slug: {tenant.slug}
-                      {tenant.contact_email && ` • ${tenant.contact_email}`}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{tenant.name}</span>
+                        <Badge variant={tenant.is_active ? "default" : "secondary"}>
+                          {tenant.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                          {tenant.slug}
+                        </span>
+                        {tenant.contact_email && (
+                          <span className="ml-2">• {tenant.contact_email}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-          <div className="text-sm text-muted-foreground">
-                    Created: {new Date(tenant.created_at).toLocaleDateString()}
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-muted-foreground text-right">
+                      <div>Created</div>
+                      <div>{new Date(tenant.created_at).toLocaleDateString()}</div>
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(tenant)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSettings(tenant)}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDeactivate(tenant)}
+                          className="text-orange-600 focus:text-orange-600"
+                        >
+                          <Power className="mr-2 h-4 w-4" />
+                          Deactivate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeletePermanent(tenant)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <AlertTriangle className="mr-2 h-4 w-4" />
+                          Delete Permanently
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Create Tenant Dialog */}
+      <TenantDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+
+      {/* Edit Tenant Dialog */}
+      <TenantDialog
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setSelectedTenant(null);
+        }}
+        tenant={selectedTenant}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteTenantDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setSelectedTenant(null);
+        }}
+        tenant={selectedTenant}
+        mode={deleteMode}
+      />
     </div>
   );
 }
-

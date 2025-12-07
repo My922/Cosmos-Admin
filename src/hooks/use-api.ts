@@ -48,6 +48,16 @@ export function useDeleteTenant() {
   });
 }
 
+export function useDeleteTenantPermanent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.tenants.deletePermanent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+    },
+  });
+}
+
 // Users
 export function useUsers(params?: { skip?: number; limit?: number }) {
   return useQuery({
@@ -78,6 +88,52 @@ export function useCreateUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
+  });
+}
+
+export function useUpdateUser(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.users.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", id] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.users.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useDeleteUserPermanent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.users.deletePermanent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useChangePassword(id: string) {
+  return useMutation({
+    mutationFn: (data: { current_password?: string; new_password: string }) =>
+      api.users.changePassword(id, data),
+  });
+}
+
+// Roles
+export function useRoles() {
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: () => api.roles.list(),
   });
 }
 

@@ -105,6 +105,7 @@ export const api = {
     create: (data: unknown) => apiClient.post("/tenants", data),
     update: (id: string, data: unknown) => apiClient.patch(`/tenants/${id}`, data),
     delete: (id: string) => apiClient.delete(`/tenants/${id}`),
+    deletePermanent: (id: string) => apiClient.delete(`/tenants/${id}/permanent`),
   },
 
   // Users
@@ -115,7 +116,15 @@ export const api = {
     create: (data: unknown) => apiClient.post("/users", data),
     update: (id: string, data: unknown) => apiClient.patch(`/users/${id}`, data),
     delete: (id: string) => apiClient.delete(`/users/${id}`),
+    deletePermanent: (id: string) => apiClient.delete(`/users/${id}/permanent`),
+    changePassword: (id: string, data: { current_password?: string; new_password: string }) =>
+      apiClient.post(`/users/${id}/change-password`, data),
     me: () => apiClient.get("/users/me"),
+  },
+
+  // Roles
+  roles: {
+    list: () => apiClient.get("/roles"),
   },
 
   // Clients

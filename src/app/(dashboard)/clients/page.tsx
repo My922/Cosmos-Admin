@@ -50,7 +50,7 @@ export default function ClientsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
           <p className="text-muted-foreground">
-            View and manage client profiles across tenants
+            View and manage your organization's client profiles
           </p>
         </div>
         <div className="relative w-64">
@@ -76,9 +76,9 @@ export default function ClientsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Client Directory</CardTitle>
+          <CardTitle>Your Clients</CardTitle>
           <CardDescription>
-            {clientList.length} client{clientList.length !== 1 ? 's' : ''} across the platform
+            {clientList.length} client{clientList.length !== 1 ? 's' : ''} in your organization
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -92,7 +92,7 @@ export default function ClientsPage() {
               <p className="mt-4 text-sm text-muted-foreground">
                 {search
                   ? "No clients match your search."
-                  : "No clients found. Clients will appear here once onboarded by EAM firms."}
+                  : "No clients found. Add clients to start managing your CRM."}
               </p>
             </div>
           ) : (

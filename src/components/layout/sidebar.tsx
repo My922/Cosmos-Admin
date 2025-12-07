@@ -13,10 +13,14 @@ import {
   ScrollText,
   Settings,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/auth-context";
+import { Badge } from "@/components/ui/badge";
 
-const navigation = [
+// Platform management (super admin)
+const platformNavigation = [
   {
     name: "Dashboard",
     href: "/dashboard",
@@ -26,17 +30,27 @@ const navigation = [
     name: "Tenants",
     href: "/tenants",
     icon: Building2,
+    superAdminOnly: true,
   },
   {
     name: "Users",
     href: "/users",
     icon: Users,
   },
+];
+
+// CRM / Tenant-specific
+const tenantNavigation = [
   {
     name: "Clients",
     href: "/clients",
     icon: UserCircle,
+    description: "Your tenant's clients",
   },
+];
+
+// System
+const systemNavigation = [
   {
     name: "Modules",
     href: "/modules",
@@ -64,6 +78,32 @@ const bottomNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  
+  const isSuperAdmin = user?.roles.includes("super_admin") ?? false;
+
+  const NavLink = ({ item }: { item: { name: string; href: string; icon: React.ComponentType<{ className?: string }>; superAdminOnly?: boolean } }) => {
+    // Hide super admin only items for non-super admins
+    if (item.superAdminOnly && !isSuperAdmin) {
+      return null;
+    }
+    
+    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+    return (
+      <Link
+        href={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <item.icon className="h-5 w-5" />
+        {item.name}
+      </Link>
+    );
+  };
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
@@ -76,57 +116,57 @@ export function Sidebar() {
       </div>
 
       <Separator />
+      
+      {/* Super Admin Badge */}
+      {isSuperAdmin && (
+        <div className="px-4 py-2">
+          <Badge variant="secondary" className="w-full justify-center gap-1">
+            <Shield className="h-3 w-3" />
+            Platform Admin
+          </Badge>
+        </div>
+      )}
 
-      {/* Main Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          );
-        })}
+      {/* Platform Navigation */}
+      <nav className="space-y-1 px-3 py-2">
+        <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {isSuperAdmin ? "Platform" : "Overview"}
+        </p>
+        {platformNavigation.map((item) => (
+          <NavLink key={item.name} item={item} />
+        ))}
+      </nav>
+
+      {/* Tenant / CRM Navigation */}
+      <nav className="space-y-1 px-3 py-2">
+        <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          CRM
+        </p>
+        {tenantNavigation.map((item) => (
+          <NavLink key={item.name} item={item} />
+        ))}
+      </nav>
+
+      {/* System Navigation */}
+      <nav className="flex-1 space-y-1 px-3 py-2">
+        <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          System
+        </p>
+        {systemNavigation.map((item) => (
+          <NavLink key={item.name} item={item} />
+        ))}
       </nav>
 
       <Separator />
 
       {/* Bottom Navigation */}
       <nav className="space-y-1 px-3 py-4">
-        {bottomNavigation.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          );
-        })}
+        {bottomNavigation.map((item) => (
+          <NavLink key={item.name} item={item} />
+        ))}
         <button
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          onClick={() => {
-            // TODO: Implement logout
-            window.location.href = "/login";
-          }}
+          onClick={logout}
         >
           <LogOut className="h-5 w-5" />
           Sign Out

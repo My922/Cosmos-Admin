@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { QueryClient } from "@tanstack/react-query";
 import {
   AuthTokens,
   TokenPayload,
@@ -38,7 +39,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ 
+  children,
+  queryClient 
+}: { 
+  children: ReactNode;
+  queryClient: QueryClient;
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
+      // Clear all cached queries to ensure fresh data for new user
+      queryClient.clear();
+
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (err) {
@@ -112,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, queryClient]);
 
   const logout = useCallback(() => {
     // Call logout endpoint (fire and forget)
@@ -130,9 +140,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens();
     setUser(null);
     
+    // Clear all cached queries to prevent stale data when logging in as different user
+    queryClient.clear();
+    
     // Redirect to login
     router.push("/login");
-  }, [router]);
+  }, [router, queryClient]);
 
   const value: AuthContextType = {
     user,

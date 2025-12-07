@@ -13,16 +13,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
+import { useCurrentUser } from "@/hooks/use-api";
 import { Badge } from "@/components/ui/badge";
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user: authUser, logout } = useAuth();
+  const { data: currentUser, isLoading } = useCurrentUser();
 
-  // Get initials for avatar
+  // Get initials for avatar from actual user data
   const getInitials = () => {
-    if (!user) return "U";
-    return "A"; // Admin
+    if (!currentUser) return "U";
+    const first = currentUser.first_name?.[0] || "";
+    const last = currentUser.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "U";
   };
+
+  // Get display name
+  const displayName = currentUser 
+    ? `${currentUser.first_name} ${currentUser.last_name}`
+    : "Loading...";
+
+  // Get user email
+  const userEmail = currentUser?.email || "Loading...";
+
+  // Check if platform admin
+  const isPlatformAdmin = authUser?.roles.includes("super_admin") || 
+                          authUser?.roles.includes("platform_admin");
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-6">
@@ -51,7 +67,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar>
-                <AvatarImage src="" alt="Admin" />
+                <AvatarImage src="" alt={displayName} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
                   {getInitials()}
                 </AvatarFallback>
@@ -62,15 +78,15 @@ export function Header() {
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
-                  {user?.roles.includes("super_admin") && (
+                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  {isPlatformAdmin && (
                     <Badge variant="secondary" className="text-xs">
-                      Super Admin
+                      Platform Admin
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user?.id ? `ID: ${user.id.slice(0, 8)}...` : "Loading..."}
+                  {userEmail}
                 </p>
               </div>
             </DropdownMenuLabel>
