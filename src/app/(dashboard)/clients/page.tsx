@@ -1,13 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, UserCheck } from "lucide-react";
-import { useClients } from "@/hooks/use-api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Loader2, UserCheck, Plus, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { useClients, useClient } from "@/hooks/use-api";
+import { useAuth } from "@/contexts/auth-context";
+import { ClientDialog, DeleteClientDialog } from "@/components/clients";
 
-interface Client {
+interface ClientSummary {
   id: string;
   display_name: string;
   client_type: "individual" | "entity" | "trust";
@@ -15,11 +26,65 @@ interface Client {
   total_aum?: number;
 }
 
+interface ClientFull {
+  id: string;
+  client_type: "individual" | "entity" | "trust";
+  first_name?: string;
+  last_name?: string;
+  entity_name?: string;
+  email?: string;
+  phone?: string;
+  kyc_status: string;
+  risk_profile?: string;
+  extra_data?: any;
+  tenant_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function ClientsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const { data: clients, isLoading, error } = useClients({ search: search || undefined });
 
-  const clientList = (clients as Client[]) || [];
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientForDelete, setSelectedClientForDelete] = useState<ClientSummary | null>(null);
+
+  // Fetch full client details when editing
+  const { data: fullClientData } = useClient(selectedClientId || "", {
+    enabled: !!selectedClientId && editDialogOpen,
+  });
+
+  const clientList = (clients as ClientSummary[]) || [];
+
+  // Check if user can manage clients (tenant_admin or platform roles)
+  const canManage = user?.roles?.some((role: string) =>
+    ["super_admin", "platform_admin", "tenant_admin"].includes(role)
+  );
+
+  const handleEdit = (client: ClientSummary) => {
+    setSelectedClientId(client.id);
+    setEditDialogOpen(true);
+  };
+
+  const handleDelete = (client: ClientSummary) => {
+    setSelectedClientForDelete(client);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleViewDetails = (clientId: string) => {
+    router.push(`/clients/${clientId}`);
+  };
+
+  const handleCloseEdit = () => {
+    setEditDialogOpen(false);
+    setSelectedClientId(null);
+  };
 
   const getKycBadgeVariant = (status: string) => {
     switch (status) {
@@ -53,14 +118,22 @@ export default function ClientsPage() {
             View and manage your organization's client profiles
           </p>
         </div>
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search clients..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search clients..."
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {canManage && (
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Client
+            </Button>
+          )}
         </div>
       </div>
 
@@ -113,9 +186,41 @@ export default function ClientsPage() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">{formatAum(client.total_aum)}</div>
-                    <div className="text-xs text-muted-foreground">Total AUM</div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="font-medium">{formatAum(client.total_aum)}</div>
+                      <div className="text-xs text-muted-foreground">Total AUM</div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetails(client.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        {canManage && (
+                          <>
+                            <DropdownMenuItem onClick={() => handleEdit(client)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(client)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -123,6 +228,29 @@ export default function ClientsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Client Dialog */}
+      <ClientDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+
+      {/* Edit Client Dialog */}
+      <ClientDialog
+        open={editDialogOpen}
+        onOpenChange={handleCloseEdit}
+        client={fullClientData as ClientFull}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteClientDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setSelectedClientForDelete(null);
+        }}
+        client={selectedClientForDelete}
+      />
     </div>
   );
 }

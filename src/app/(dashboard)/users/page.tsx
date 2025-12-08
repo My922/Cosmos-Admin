@@ -22,6 +22,8 @@ import {
   KeyRound,
   Power,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useUsers, useTenants } from "@/hooks/use-api";
 import { useAuth } from "@/contexts/auth-context";
@@ -61,9 +63,13 @@ export default function UsersPage() {
   const [deleteMode, setDeleteMode] = useState<"deactivate" | "permanent">("deactivate");
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Collapsible state for tenant groups (all open by default)
+  const [openTenants, setOpenTenants] = useState<Record<string, boolean>>({});
 
   const isSuperAdmin = currentUser?.roles.includes("super_admin") ?? false;
-  const isAdmin = isSuperAdmin || currentUser?.roles.some(role => 
+  const isPlatformAdmin = isSuperAdmin || currentUser?.roles.includes("platform_admin");
+  const isAdmin = isPlatformAdmin || currentUser?.roles.some(role => 
     ["tenant_admin", "eam_manager"].includes(role)
   );
   const userList = (users as User[]) || [];
@@ -74,6 +80,17 @@ export default function UsersPage() {
     acc[t.id] = t;
     return acc;
   }, {} as Record<string, Tenant>);
+
+  // Group users by tenant (for platform admins)
+  const usersByTenant: Record<string, User[]> = {};
+  if (isPlatformAdmin) {
+    userList.forEach(user => {
+      if (!usersByTenant[user.tenant_id]) {
+        usersByTenant[user.tenant_id] = [];
+      }
+      usersByTenant[user.tenant_id].push(user);
+    });
+  }
 
   const getTenantName = (tenantId: string) => {
     return tenantMap[tenantId]?.name ?? "Unknown Tenant";
@@ -100,8 +117,123 @@ export default function UsersPage() {
     setDeleteMode("permanent");
     setDeleteDialogOpen(true);
   };
+  
+  const toggleTenant = (tenantId: string) => {
+    setOpenTenants(prev => ({
+      ...prev,
+      [tenantId]: prev[tenantId] === undefined ? false : !prev[tenantId]
+    }));
+  };
+  
+  const isTenantOpen = (tenantId: string) => {
+    return openTenants[tenantId] !== false; // default to true (open)
+  };
 
   const isCurrentUser = (userId: string) => userId === currentUser?.id;
+
+  // Render a single user row
+  const renderUserRow = (user: User) => (
+    <div
+      key={user.id}
+      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+    >
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+          {user.first_name.charAt(0).toUpperCase()}
+          {user.last_name.charAt(0).toUpperCase()}
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">
+              {user.first_name} {user.last_name}
+            </span>
+            {isCurrentUser(user.id) && (
+              <Badge variant="outline" className="text-xs">You</Badge>
+            )}
+            {user.is_superuser && (
+              <Badge variant="destructive" className="gap-1">
+                <Shield className="h-3 w-3" />
+                Super Admin
+              </Badge>
+            )}
+            <Badge variant={user.is_active ? "default" : "secondary"}>
+              {user.is_active ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+          <div className="text-sm text-muted-foreground">{user.email}</div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-muted-foreground text-right">
+          <div>Joined</div>
+          <div>{new Date(user.created_at).toLocaleDateString()}</div>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isAdmin && (
+              <>
+                <DropdownMenuItem onClick={() => handleEdit(user)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleChangePassword(user)}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  {isCurrentUser(user.id) ? "Change Password" : "Reset Password"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {!isAdmin && isCurrentUser(user.id) && (
+              <>
+                <DropdownMenuItem onClick={() => handleChangePassword(user)}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Change Password
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {isAdmin && !isCurrentUser(user.id) && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleDeactivate(user)}
+                  className="text-orange-600 focus:text-orange-600"
+                >
+                  <Power className="mr-2 h-4 w-4" />
+                  Deactivate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDeletePermanent(user)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  Delete Permanently
+                </DropdownMenuItem>
+              </>
+            )}
+            {isCurrentUser(user.id) && (
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                <Power className="mr-2 h-4 w-4" />
+                Cannot delete yourself
+              </DropdownMenuItem>
+            )}
+            {!isAdmin && !isCurrentUser(user.id) && (
+              <DropdownMenuItem disabled className="text-muted-foreground text-xs">
+                Admin access required
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -147,10 +279,10 @@ export default function UsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{isSuperAdmin ? "All Platform Users" : "Your Team"}</CardTitle>
+          <CardTitle>{isPlatformAdmin ? "All Platform Users" : "Your Team"}</CardTitle>
           <CardDescription>
             {userList.length} user{userList.length !== 1 ? "s" : ""}{" "}
-            {isSuperAdmin ? " across the platform" : " in your organization"}
+            {isPlatformAdmin ? "across the platform" : "in your organization"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -165,116 +297,62 @@ export default function UsersPage() {
                 No users found. Click "Add User" to create your first team member.
               </p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {userList.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                      {user.first_name.charAt(0).toUpperCase()}
-                      {user.last_name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {user.first_name} {user.last_name}
-                        </span>
-                        {isCurrentUser(user.id) && (
-                          <Badge variant="outline" className="text-xs">You</Badge>
-                        )}
-                        {user.is_superuser && (
-                          <Badge variant="destructive" className="gap-1">
-                            <Shield className="h-3 w-3" />
-                            Super Admin
-                          </Badge>
-                        )}
-                        <Badge variant={user.is_active ? "default" : "secondary"}>
-                          {user.is_active ? "Active" : "Inactive"}
+          ) : isPlatformAdmin ? (
+            // Platform admin view: grouped by tenant
+            <div className="space-y-4">
+              {Object.keys(usersByTenant).sort((a, b) => {
+                const tenantA = tenantMap[a]?.name || "";
+                const tenantB = tenantMap[b]?.name || "";
+                return tenantA.localeCompare(tenantB);
+              }).map((tenantId) => {
+                const tenant = tenantMap[tenantId];
+                const tenantUsers = usersByTenant[tenantId];
+                const isOpen = isTenantOpen(tenantId);
+
+                return (
+                  <Card key={tenantId}>
+                    <CardHeader 
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => toggleTenant(tenantId)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {isOpen ? (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <Building2 className="h-5 w-5 text-primary" />
+                          <div className="text-left">
+                            <CardTitle className="text-lg">
+                              {tenant?.name || "Unknown Tenant"}
+                            </CardTitle>
+                            <CardDescription>
+                              {tenantUsers.length} user{tenantUsers.length !== 1 ? "s" : ""}
+                              {tenant?.slug && ` • ${tenant.slug}`}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="ml-auto">
+                          {tenantUsers.length}
                         </Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                      {isSuperAdmin && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Building2 className="h-3 w-3" />
-                          {getTenantName(user.tenant_id)}
+                    </CardHeader>
+                    {isOpen && (
+                      <CardContent className="pt-0">
+                        <div className="space-y-3">
+                          {tenantUsers.map((user) => renderUserRow(user))}
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm text-muted-foreground text-right">
-                      <div>Joined</div>
-                      <div>{new Date(user.created_at).toLocaleDateString()}</div>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {isAdmin && (
-                          <>
-                            <DropdownMenuItem onClick={() => handleEdit(user)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChangePassword(user)}>
-                              <KeyRound className="mr-2 h-4 w-4" />
-                              {isCurrentUser(user.id) ? "Change Password" : "Reset Password"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        {!isAdmin && isCurrentUser(user.id) && (
-                          <>
-                            <DropdownMenuItem onClick={() => handleChangePassword(user)}>
-                              <KeyRound className="mr-2 h-4 w-4" />
-                              Change Password
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        {isAdmin && !isCurrentUser(user.id) && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => handleDeactivate(user)}
-                              className="text-orange-600 focus:text-orange-600"
-                            >
-                              <Power className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeletePermanent(user)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <AlertTriangle className="mr-2 h-4 w-4" />
-                              Delete Permanently
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {isCurrentUser(user.id) && (
-                          <DropdownMenuItem disabled className="text-muted-foreground">
-                            <Power className="mr-2 h-4 w-4" />
-                            Cannot delete yourself
-                          </DropdownMenuItem>
-                        )}
-                        {!isAdmin && !isCurrentUser(user.id) && (
-                          <DropdownMenuItem disabled className="text-muted-foreground text-xs">
-                            Admin access required
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              ))}
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            // Tenant admin/user view: flat list
+            <div className="space-y-3">
+              {userList.map((user) => renderUserRow(user))}
             </div>
           )}
         </CardContent>

@@ -149,11 +149,11 @@ export function useClients(params?: {
   });
 }
 
-export function useClient(id: string) {
+export function useClient(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["clients", id],
     queryFn: () => api.clients.get(id),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled : !!id,
   });
 }
 
@@ -163,7 +163,46 @@ export function useCreateClient() {
     mutationFn: (data: unknown) => api.clients.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
+  });
+}
+
+export function useUpdateClient(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.clients.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients", id] });
+    },
+  });
+}
+
+export function useDeleteClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.clients.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+  });
+}
+
+export function useClientAccounts(id: string) {
+  return useQuery({
+    queryKey: ["clients", id, "accounts"],
+    queryFn: () => api.clients.accounts(id),
+    enabled: !!id,
+  });
+}
+
+export function useClientDocuments(id: string) {
+  return useQuery({
+    queryKey: ["clients", id, "documents"],
+    queryFn: () => api.clients.documents(id),
+    enabled: !!id,
   });
 }
 

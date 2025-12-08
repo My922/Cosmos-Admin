@@ -80,11 +80,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   
-  const isSuperAdmin = user?.roles.includes("super_admin") ?? false;
+  // Platform-level users can see platform sections (Tenants, etc.)
+  // - platform_admin/super_admin: full access
+  // - platform_user: read-only access
+  const isPlatformLevel = (user?.roles.includes("super_admin") || 
+                           user?.roles.includes("platform_admin") ||
+                           user?.roles.includes("platform_user")) ?? false;
+  
+  // Platform admin = can manage (create/edit/delete)
+  const isPlatformAdmin = (user?.roles.includes("super_admin") || 
+                           user?.roles.includes("platform_admin")) ?? false;
 
   const NavLink = ({ item }: { item: { name: string; href: string; icon: React.ComponentType<{ className?: string }>; superAdminOnly?: boolean } }) => {
-    // Hide super admin only items for non-super admins
-    if (item.superAdminOnly && !isSuperAdmin) {
+    // Hide platform-only items for non-platform users
+    if (item.superAdminOnly && !isPlatformLevel) {
       return null;
     }
     
@@ -117,12 +126,12 @@ export function Sidebar() {
 
       <Separator />
       
-      {/* Super Admin Badge */}
-      {isSuperAdmin && (
+      {/* Platform Level Badge */}
+      {isPlatformLevel && (
         <div className="px-4 py-2">
           <Badge variant="secondary" className="w-full justify-center gap-1">
             <Shield className="h-3 w-3" />
-            Platform Admin
+            {isPlatformAdmin ? "Platform Admin" : "Platform User"}
           </Badge>
         </div>
       )}
@@ -130,7 +139,7 @@ export function Sidebar() {
       {/* Platform Navigation */}
       <nav className="space-y-1 px-3 py-2">
         <p className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {isSuperAdmin ? "Platform" : "Overview"}
+          {isPlatformLevel ? "Platform" : "Overview"}
         </p>
         {platformNavigation.map((item) => (
           <NavLink key={item.name} item={item} />

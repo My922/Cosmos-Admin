@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Loader2, Building2, MoreHorizontal, Pencil, Trash2, Settings, Power, AlertTriangle } from "lucide-react";
+import { Plus, Loader2, Building2, MoreHorizontal, Pencil, Trash2, Settings, Power, AlertTriangle, Eye } from "lucide-react";
 import { useTenants } from "@/hooks/use-api";
+import { useAuth } from "@/contexts/auth-context";
 import { TenantDialog, DeleteTenantDialog } from "@/components/tenants";
 
 interface Tenant {
@@ -28,6 +29,11 @@ interface Tenant {
 
 export default function TenantsPage() {
   const { data: tenants, isLoading, error } = useTenants();
+  const { user } = useAuth();
+  
+  // Platform admin can manage (create/edit/delete), platform user is read-only
+  const canManage = (user?.roles.includes("super_admin") || 
+                     user?.roles.includes("platform_admin")) ?? false;
   
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -66,13 +72,17 @@ export default function TenantsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tenants</h1>
           <p className="text-muted-foreground">
-            Manage EAM firms and their configurations
+            {canManage 
+              ? "Manage EAM firms and their configurations"
+              : "View EAM firms registered on the platform"}
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Tenant
-        </Button>
+        {canManage && (
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Tenant
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -147,29 +157,38 @@ export default function TenantsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(tenant)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSettings(tenant)}>
-                          <Settings className="mr-2 h-4 w-4" />
-                          Settings
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeactivate(tenant)}
-                          className="text-orange-600 focus:text-orange-600"
-                        >
-                          <Power className="mr-2 h-4 w-4" />
-                          Deactivate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeletePermanent(tenant)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <AlertTriangle className="mr-2 h-4 w-4" />
-                          Delete Permanently
-                        </DropdownMenuItem>
+                        {canManage ? (
+                          <>
+                            <DropdownMenuItem onClick={() => handleEdit(tenant)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSettings(tenant)}>
+                              <Settings className="mr-2 h-4 w-4" />
+                              Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeactivate(tenant)}
+                              className="text-orange-600 focus:text-orange-600"
+                            >
+                              <Power className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeletePermanent(tenant)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <AlertTriangle className="mr-2 h-4 w-4" />
+                              Delete Permanently
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <DropdownMenuItem disabled className="text-muted-foreground">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Only
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
