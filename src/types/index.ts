@@ -306,3 +306,111 @@ export interface ApiError {
   errors?: Record<string, unknown>[];
 }
 
+// ============================================================================
+// Product Category Types
+// ============================================================================
+
+export interface ProductCategory {
+  id: string;
+  tenant_id: string | null;
+  code: string;
+  name: string;
+  name_zh?: string;
+  description?: string;
+  icon?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCategoryCreate {
+  code: string;
+  name: string;
+  name_zh?: string;
+  description?: string;
+  icon?: string;
+  sort_order?: number;
+}
+
+export interface ProductCategoryUpdate {
+  name?: string;
+  name_zh?: string;
+  description?: string;
+  icon?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+// ============================================================================
+// Product Types
+// ============================================================================
+
+export type RiskLevel =
+  | "conservative"
+  | "moderate"
+  | "balanced"
+  | "growth"
+  | "aggressive";
+
+export interface Product {
+  id: string;
+  module_id: string;
+  tenant_id: string | null;
+  category_id: string | null;
+  code: string;
+  name: string;
+  name_zh?: string;
+  description?: string;
+  description_zh?: string;
+  category: string; // Denormalized display name
+  risk_level: RiskLevel;
+  min_investment: number;
+  currency: string;
+  expected_return?: string;
+  is_visible: boolean;
+  is_default: boolean;
+  extra_data?: Record<string, unknown>;
+  // Joined fields from API
+  module_code?: string;
+  module_name?: string;
+  category_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCreate {
+  module_id: string;
+  code: string;
+  name: string;
+  name_zh?: string;
+  description?: string;
+  description_zh?: string;
+  category: string;
+  category_id?: string;
+  risk_level: RiskLevel;
+  min_investment?: number;
+  currency?: string;
+  expected_return?: string;
+  extra_data?: Record<string, unknown>;
+}
+
+export interface ProductUpdate {
+  name?: string;
+  name_zh?: string;
+  description?: string;
+  description_zh?: string;
+  category?: string;
+  category_id?: string;
+  risk_level?: RiskLevel;
+  min_investment?: number;
+  currency?: string;
+  expected_return?: string;
+  is_visible?: boolean;
+  extra_data?: Record<string, unknown>;
+}
+
+export interface ProductVisibilityUpdate {
+  is_visible: boolean;
+}
+

@@ -484,3 +484,178 @@ export function useSystemHealth() {
   });
 }
 
+// ============================================================================
+// Product Categories
+// ============================================================================
+
+export interface CategoryFilters {
+  include_inactive?: boolean;
+}
+
+// List categories for current tenant (includes platform defaults)
+export function useCategories(params?: CategoryFilters) {
+  return useQuery({
+    queryKey: ["categories", params],
+    queryFn: () => api.categories.list(params),
+  });
+}
+
+// List platform default categories (platform admin)
+export function useDefaultCategories(params?: CategoryFilters) {
+  return useQuery({
+    queryKey: ["categories", "defaults", params],
+    queryFn: () => api.categories.listDefaults(params),
+  });
+}
+
+// Get a specific category
+export function useCategory(categoryId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["categories", categoryId],
+    queryFn: () => api.categories.get(categoryId),
+    enabled: options?.enabled !== undefined ? options.enabled : !!categoryId,
+  });
+}
+
+// Create tenant-specific category
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.categories.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+}
+
+// Create platform default category (platform admin)
+export function useCreateDefaultCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.categories.createDefault(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+}
+
+// Update a category
+export function useUpdateCategory(categoryId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.categories.update(categoryId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories", categoryId] });
+    },
+  });
+}
+
+// Delete a category
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (categoryId: string) => api.categories.delete(categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+}
+
+// ============================================================================
+// Products
+// ============================================================================
+
+export interface ProductFilters {
+  module_id?: string;
+  module_code?: string;
+  category_id?: string;
+  risk_level?: string;
+  visible_only?: boolean;
+  skip?: number;
+  limit?: number;
+}
+
+// List products for current tenant (includes platform defaults)
+export function useProducts(params?: ProductFilters) {
+  return useQuery({
+    queryKey: ["products", params],
+    queryFn: () => api.products.list(params),
+  });
+}
+
+// List platform default products (platform admin)
+export function useDefaultProducts(params?: { module_id?: string; visible_only?: boolean }) {
+  return useQuery({
+    queryKey: ["products", "defaults", params],
+    queryFn: () => api.products.listDefaults(params),
+  });
+}
+
+// Get a specific product
+export function useProduct(productId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["products", productId],
+    queryFn: () => api.products.get(productId),
+    enabled: options?.enabled !== undefined ? options.enabled : !!productId,
+  });
+}
+
+// Create tenant-specific product
+export function useCreateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.products.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+// Create platform default product (platform admin)
+export function useCreateDefaultProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.products.createDefault(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+// Update a product
+export function useUpdateProduct(productId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: unknown) => api.products.update(productId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", productId] });
+    },
+  });
+}
+
+// Toggle product visibility
+export function useToggleProductVisibility() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, isVisible }: { productId: string; isVisible: boolean }) =>
+      api.products.toggleVisibility(productId, isVisible),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", variables.productId] });
+    },
+  });
+}
+
+// Delete a product
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productId: string) => api.products.delete(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+

@@ -309,5 +309,83 @@ export const api = {
       background_jobs: string;
     }>("/stats/health"),
   },
+
+  // Product Categories
+  categories: {
+    // List categories for current tenant (includes platform defaults)
+    list: (params?: { include_inactive?: boolean }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.include_inactive) searchParams.set("include_inactive", "true");
+      const query = searchParams.toString();
+      return apiClient.get(`/categories${query ? `?${query}` : ""}`);
+    },
+    // List platform default categories (platform admin)
+    listDefaults: (params?: { include_inactive?: boolean }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.include_inactive) searchParams.set("include_inactive", "true");
+      const query = searchParams.toString();
+      return apiClient.get(`/categories/defaults${query ? `?${query}` : ""}`);
+    },
+    // Get a specific category
+    get: (categoryId: string) => apiClient.get(`/categories/${categoryId}`),
+    // Create tenant-specific category
+    create: (data: unknown) => apiClient.post("/categories", data),
+    // Create platform default category (platform admin)
+    createDefault: (data: unknown) => apiClient.post("/categories/defaults", data),
+    // Update a category
+    update: (categoryId: string, data: unknown) =>
+      apiClient.patch(`/categories/${categoryId}`, data),
+    // Delete a category
+    delete: (categoryId: string) => apiClient.delete(`/categories/${categoryId}`),
+  },
+
+  // Products
+  products: {
+    // List products for current tenant (includes platform defaults)
+    list: (params?: {
+      module_id?: string;
+      module_code?: string;
+      category_id?: string;
+      risk_level?: string;
+      visible_only?: boolean;
+      skip?: number;
+      limit?: number;
+    }) => {
+      const searchParams = new URLSearchParams({
+        skip: String(params?.skip || 0),
+        limit: String(params?.limit || 100),
+      });
+      if (params?.module_id) searchParams.set("module_id", params.module_id);
+      if (params?.module_code) searchParams.set("module_code", params.module_code);
+      if (params?.category_id) searchParams.set("category_id", params.category_id);
+      if (params?.risk_level) searchParams.set("risk_level", params.risk_level);
+      if (params?.visible_only !== undefined)
+        searchParams.set("visible_only", String(params.visible_only));
+      return apiClient.get(`/products?${searchParams}`);
+    },
+    // List platform default products (platform admin)
+    listDefaults: (params?: { module_id?: string; visible_only?: boolean }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.module_id) searchParams.set("module_id", params.module_id);
+      if (params?.visible_only !== undefined)
+        searchParams.set("visible_only", String(params.visible_only));
+      const query = searchParams.toString();
+      return apiClient.get(`/products/defaults${query ? `?${query}` : ""}`);
+    },
+    // Get a specific product
+    get: (productId: string) => apiClient.get(`/products/${productId}`),
+    // Create tenant-specific product
+    create: (data: unknown) => apiClient.post("/products", data),
+    // Create platform default product (platform admin)
+    createDefault: (data: unknown) => apiClient.post("/products/defaults", data),
+    // Update a product
+    update: (productId: string, data: unknown) =>
+      apiClient.patch(`/products/${productId}`, data),
+    // Toggle product visibility
+    toggleVisibility: (productId: string, isVisible: boolean) =>
+      apiClient.patch(`/products/${productId}/visibility`, { is_visible: isVisible }),
+    // Delete a product
+    delete: (productId: string) => apiClient.delete(`/products/${productId}`),
+  },
 };
 
