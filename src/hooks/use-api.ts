@@ -659,3 +659,21 @@ export function useDeleteProduct() {
   });
 }
 
+// Update product sync settings (platform admin)
+export function useUpdateProductSync() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      data,
+    }: {
+      productId: string;
+      data: { is_unlocked_for_all?: boolean; tenant_ids?: string[] };
+    }) => api.products.updateSync(productId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", variables.productId] });
+    },
+  });
+}
+

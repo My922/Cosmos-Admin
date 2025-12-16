@@ -29,11 +29,14 @@ import {
   EyeOff,
   Package,
   Search,
+  Globe,
+  Users,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useProducts, useMyTenantModules, useToggleProductVisibility } from "@/hooks/use-api";
+import { useProducts, useMyTenantModules, useToggleProductVisibility, useDefaultProducts } from "@/hooks/use-api";
 import { Product, RiskLevel, TenantModuleStatus } from "@/types";
-import { ProductDialog, DeleteProductDialog } from "@/components/products";
+import { ProductDialog, DeleteProductDialog, PlatformProductDialog } from "@/components/products";
 
 export default function ProductsPage() {
   const { user } = useAuth();
@@ -73,11 +76,18 @@ export default function ProductsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [platformDialogOpen, setPlatformDialogOpen] = useState(false);
+  const [platformEditDialogOpen, setPlatformEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
-    setEditDialogOpen(true);
+    // Use platform dialog for platform products (is_default=true, no tenant_id)
+    if (product.is_default && !product.tenant_id && isPlatformAdmin) {
+      setPlatformEditDialogOpen(true);
+    } else {
+      setEditDialogOpen(true);
+    }
   };
 
   const handleDelete = (product: Product) => {
@@ -148,12 +158,20 @@ export default function ProductsPage() {
             Manage investment products across all modules
           </p>
         </div>
-        {isTenantAdmin && (
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {isPlatformAdmin && (
+            <Button variant="outline" onClick={() => setPlatformDialogOpen(true)}>
+              <Globe className="mr-2 h-4 w-4" />
+              Add Platform Product
+            </Button>
+          )}
+          {isTenantAdmin && (
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -260,12 +278,24 @@ export default function ProductsPage() {
                             <CardTitle className="text-base">{product.name}</CardTitle>
                             {product.is_default && (
                               <Badge variant="outline" className="text-xs">
-                                Default
+                                Platform
                               </Badge>
                             )}
                             {product.tenant_id && (
                               <Badge variant="default" className="text-xs">
                                 Custom
+                              </Badge>
+                            )}
+                            {product.is_default && product.is_unlocked_for_all && (
+                              <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 border-green-300">
+                                <Globe className="mr-1 h-3 w-3" />
+                                All Tenants
+                              </Badge>
+                            )}
+                            {product.is_default && !product.is_unlocked_for_all && isPlatformAdmin && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Users className="mr-1 h-3 w-3" />
+                                {product.synced_tenant_ids?.length || 0} Tenants
                               </Badge>
                             )}
                             {!product.is_visible && (
@@ -368,6 +398,22 @@ export default function ProductsPage() {
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
+          if (!open) setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+      />
+
+      {/* Platform Product Dialog (Create) */}
+      <PlatformProductDialog
+        open={platformDialogOpen}
+        onOpenChange={setPlatformDialogOpen}
+      />
+
+      {/* Platform Product Dialog (Edit) */}
+      <PlatformProductDialog
+        open={platformEditDialogOpen}
+        onOpenChange={(open) => {
+          setPlatformEditDialogOpen(open);
           if (!open) setSelectedProduct(null);
         }}
         product={selectedProduct}

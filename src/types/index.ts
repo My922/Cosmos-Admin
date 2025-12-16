@@ -370,11 +370,13 @@ export interface Product {
   expected_return?: string;
   is_visible: boolean;
   is_default: boolean;
+  is_unlocked_for_all: boolean; // If true, available to all tenants
   extra_data?: Record<string, unknown>;
   // Joined fields from API
   module_code?: string;
   module_name?: string;
   category_name?: string;
+  synced_tenant_ids?: string[]; // List of tenant IDs this product is synced to (platform admin view)
   created_at: string;
   updated_at: string;
 }
@@ -412,5 +414,29 @@ export interface ProductUpdate {
 
 export interface ProductVisibilityUpdate {
   is_visible: boolean;
+}
+
+// For platform admin creating products with tenant sync options
+export interface PlatformProductCreate {
+  module_id: string;
+  code: string;
+  name: string;
+  name_zh?: string;
+  description?: string;
+  description_zh?: string;
+  category: string;
+  category_id?: string;
+  risk_level: RiskLevel;
+  min_investment?: number;
+  currency?: string;
+  expected_return?: string;
+  extra_data?: Record<string, unknown>;
+  is_unlocked_for_all: boolean;
+  tenant_ids?: string[];
+}
+
+export interface ProductSyncUpdate {
+  is_unlocked_for_all?: boolean;
+  tenant_ids?: string[];
 }
 

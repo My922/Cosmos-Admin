@@ -384,6 +384,9 @@ export const api = {
     // Toggle product visibility
     toggleVisibility: (productId: string, isVisible: boolean) =>
       apiClient.patch(`/products/${productId}/visibility`, { is_visible: isVisible }),
+    // Update product sync settings (platform admin)
+    updateSync: (productId: string, data: { is_unlocked_for_all?: boolean; tenant_ids?: string[] }) =>
+      apiClient.patch(`/products/${productId}/sync`, data),
     // Delete a product
     delete: (productId: string) => apiClient.delete(`/products/${productId}`),
   },
