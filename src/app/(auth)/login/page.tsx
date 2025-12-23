@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSelector } from "@/components/language-selector";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
@@ -50,11 +53,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      {/* Language Switcher - Top Right */}
+      <div className="absolute top-4 right-4">
+        <LanguageSelector variant="dropdown" className="text-white hover:bg-white/10" />
+      </div>
+
       <Card className="w-[400px]">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">EAM Admin Portal</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("auth.loginTitle")}</CardTitle>
           <CardDescription>
-            Enter your credentials to access the admin dashboard
+            {t("auth.loginDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,7 +75,7 @@ export default function LoginPage() {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -80,7 +88,7 @@ export default function LoginPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -95,15 +103,15 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  {t("auth.loggingIn")}
                 </>
               ) : (
-                "Sign In"
+                t("auth.loginButton")
               )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground mt-4">
-              Default credentials: admin@eam-platform.com / admin123
+              {t("auth.defaultCredentials")}
             </p>
           </form>
         </CardContent>

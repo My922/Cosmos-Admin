@@ -89,7 +89,10 @@
     "forgotPassword": "忘记密码？",
     "rememberMe": "记住我",
     "loginButton": "登录",
-    "loggingIn": "登录中..."
+    "loggingIn": "登录中...",
+    "loginTitle": "Cosmos 后台管理系统",
+    "loginDescription": "输入您的凭证以访问管理仪表板",
+    "defaultCredentials": "默认凭证: admin@eam-platform.com / admin123"
   },
   "dashboard": {
     "title": "仪表板",

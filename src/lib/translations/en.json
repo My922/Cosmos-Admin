@@ -89,7 +89,10 @@
     "forgotPassword": "Forgot Password?",
     "rememberMe": "Remember Me",
     "loginButton": "Sign In",
-    "loggingIn": "Signing In..."
+    "loggingIn": "Signing In...",
+    "loginTitle": "Cosmos EAM Admin Portal",
+    "loginDescription": "Enter your credentials to access the admin dashboard",
+    "defaultCredentials": "Default credentials: admin@eam-platform.com / admin123"
   },
   "dashboard": {
     "title": "Dashboard",
