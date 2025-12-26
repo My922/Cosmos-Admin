@@ -1,3 +1,32 @@
+// ============================================================================
+// Branding Types
+// ============================================================================
+
+export interface TenantBranding {
+  app_name?: string;
+  primary_color?: string;
+  logo_url?: string;
+  has_logo?: boolean;
+}
+
+export interface BrandingResponse {
+  tenant_id: string;
+  tenant_name: string;
+  app_name?: string;
+  primary_color?: string;
+  logo_url?: string;
+  has_logo: boolean;
+}
+
+export interface BrandingUpdate {
+  app_name?: string;
+  primary_color?: string;
+}
+
+// ============================================================================
+// Tenant Types
+// ============================================================================
+
 export interface Tenant {
   id: string;
   name: string;
@@ -5,7 +34,7 @@ export interface Tenant {
   is_active: boolean;
   contact_email?: string;
   contact_phone?: string;
-  branding?: Record<string, unknown>;
+  branding?: TenantBranding;
   settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;

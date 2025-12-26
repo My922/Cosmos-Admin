@@ -206,6 +206,17 @@ export const api = {
     update: (id: string, data: unknown) => apiClient.patch(`/tenants/${id}`, data),
     delete: (id: string) => apiClient.delete(`/tenants/${id}`),
     deletePermanent: (id: string) => apiClient.delete(`/tenants/${id}/permanent`),
+    // Branding
+    getBranding: (id: string) => apiClient.get(`/tenants/${id}/branding`),
+    updateBranding: (id: string, data: { app_name?: string; primary_color?: string }) =>
+      apiClient.post(`/tenants/${id}/branding`, data),
+    uploadLogo: (id: string, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiClient.upload(`/tenants/${id}/logo`, formData);
+    },
+    deleteLogo: (id: string) => apiClient.delete(`/tenants/${id}/logo`),
+    getLogoUrl: (id: string) => `${API_BASE_URL.replace('/api/v1', '')}/api/v1/tenants/${id}/logo`,
   },
 
   // Users

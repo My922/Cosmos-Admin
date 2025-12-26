@@ -17,6 +17,7 @@ import {
   Shield,
   KeyRound,
   Ticket,
+  Palette,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/auth-context";
@@ -89,6 +90,11 @@ const systemNavigation = [
       name: t("sidebar.modules"),
     href: "/modules",
     icon: Blocks,
+  },
+  {
+      name: t("sidebar.branding"),
+    href: "/branding",
+    icon: Palette,
   },
   {
       name: t("sidebar.integrations"),

@@ -11,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Loader2, Building2, MoreHorizontal, Pencil, Trash2, Settings, Power, AlertTriangle, Eye, Blocks } from "lucide-react";
+import { Plus, Loader2, Building2, MoreHorizontal, Pencil, Trash2, Settings, Power, AlertTriangle, Eye, Blocks, Palette } from "lucide-react";
+import Link from "next/link";
 import { useTenants } from "@/hooks/use-api";
 import { useAuth } from "@/contexts/auth-context";
 import { TenantDialog, DeleteTenantDialog, TenantModulesDialog, TenantModuleBadges } from "@/components/tenants";
@@ -181,6 +182,12 @@ export default function TenantsPage() {
                             <DropdownMenuItem onClick={() => handleManageModules(tenant)}>
                               <Blocks className="mr-2 h-4 w-4" />
                               {t("tenants.manageModules")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/tenants/${tenant.id}/branding`}>
+                                <Palette className="mr-2 h-4 w-4" />
+                                {t("tenants.branding")}
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSettings(tenant)}>
                               <Settings className="mr-2 h-4 w-4" />
