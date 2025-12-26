@@ -497,20 +497,41 @@ export default function TaskDetailPage() {
 }
 
 // Helper component for product request display
+interface ProductRequestOrder {
+  product_id: string;
+  product_name: string;
+  module_code: string;
+  min_investment: number;
+  requested_amount: number;
+  currency: string;
+}
+
+// Legacy format for backward compatibility
 interface ProductRequestProduct {
   product_id: string;
   product_name: string;
-  module_name: string;
+  module_name?: string;
+  module_code?: string;
   min_investment: number;
+  requested_amount?: number;
   currency: string;
 }
 
 function ProductRequestDisplay({ proposalData }: { proposalData: Record<string, unknown> }) {
-  const products = (proposalData.products || []) as ProductRequestProduct[];
+  const { t } = useTranslation();
+  
+  // Use orders array if available (new format), fallback to products (legacy)
+  const orders = (proposalData.orders || []) as ProductRequestOrder[];
+  const legacyProducts = (proposalData.products || []) as ProductRequestProduct[];
   const totalMinInvestment = proposalData.total_min_investment as number | undefined;
+  const totalRequestedAmount = proposalData.total_requested_amount as number | undefined;
   const clientNotes = proposalData.client_notes as string | undefined;
 
-  if (products.length === 0) {
+  // Determine which data to display
+  const displayItems = orders.length > 0 ? orders : legacyProducts;
+  const hasRequestedAmounts = orders.length > 0 || legacyProducts.some(p => p.requested_amount !== undefined);
+
+  if (displayItems.length === 0) {
     return (
       <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto max-h-64">
         {JSON.stringify(proposalData, null, 2)}
@@ -521,41 +542,76 @@ function ProductRequestDisplay({ proposalData }: { proposalData: Record<string, 
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="text-sm font-medium mb-2">Requested Products</h4>
+        <h4 className="text-sm font-medium mb-2">{t("tasks.productRequest.requestedProducts")}</h4>
         <div className="space-y-2">
-          {products.map((product, index) => (
-            <div
-              key={product.product_id || index}
-              className="flex items-center justify-between p-3 bg-muted rounded-lg"
-            >
-              <div>
-                <p className="font-medium">{product.product_name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {product.module_name}
-                </p>
+          {displayItems.map((item, index) => {
+            const moduleDisplay = ('module_code' in item ? item.module_code : item.module_name) || '';
+            const requestedAmount = 'requested_amount' in item ? item.requested_amount : undefined;
+            const isAboveMin = requestedAmount !== undefined && requestedAmount > item.min_investment;
+            
+            return (
+              <div
+                key={item.product_id || index}
+                className="p-3 bg-muted rounded-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{item.product_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {moduleDisplay}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      {t("tasks.productRequest.minInvestment")}: {item.currency} {item.min_investment?.toLocaleString()}
+                    </p>
+                    {requestedAmount !== undefined && (
+                      <p className={`text-sm font-semibold ${isAboveMin ? 'text-primary' : ''}`}>
+                        {item.currency} {requestedAmount.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-medium">
-                  Min: {product.currency} {product.min_investment?.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {totalMinInvestment !== undefined && (
-        <div className="flex justify-between items-center pt-2 border-t">
-          <span className="font-medium">Total Minimum Investment</span>
-          <span className="text-lg font-bold">
-            USD {totalMinInvestment.toLocaleString()}
-          </span>
-        </div>
-      )}
+      {/* Summary totals */}
+      <div className="space-y-2 pt-2 border-t">
+        {totalMinInvestment !== undefined && (
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-muted-foreground">{t("tasks.productRequest.totalMinInvestment")}</span>
+            <span>
+              USD {totalMinInvestment.toLocaleString()}
+            </span>
+          </div>
+        )}
+        
+        {totalRequestedAmount !== undefined && (
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{t("tasks.productRequest.totalRequestedInvestment")}</span>
+            <span className="text-lg font-bold text-primary">
+              USD {totalRequestedAmount.toLocaleString()}
+            </span>
+          </div>
+        )}
+        
+        {/* Fallback for legacy data without requested amounts */}
+        {!hasRequestedAmounts && totalMinInvestment !== undefined && totalRequestedAmount === undefined && (
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{t("tasks.productRequest.totalMinInvestment")}</span>
+            <span className="text-lg font-bold">
+              USD {totalMinInvestment.toLocaleString()}
+            </span>
+          </div>
+        )}
+      </div>
 
       {clientNotes && (
         <div className="pt-2 border-t">
-          <h4 className="text-sm font-medium mb-1">Client Notes</h4>
+          <h4 className="text-sm font-medium mb-1">{t("tasks.productRequest.clientNotes")}</h4>
           <p className="text-sm text-muted-foreground">{clientNotes}</p>
         </div>
       )}

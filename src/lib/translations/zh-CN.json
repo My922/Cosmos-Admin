@@ -316,7 +316,15 @@
     "markComplete": "标记完成",
     "filterByStatus": "按状态筛选",
     "filterByType": "按类型筛选",
-    "filterByWorkflow": "按工作流筛选"
+    "filterByWorkflow": "按工作流筛选",
+    "productRequest": {
+      "requestedProducts": "申请的产品",
+      "minInvestment": "最低",
+      "requestedAmount": "申请金额",
+      "totalMinInvestment": "最低投资总额",
+      "totalRequestedInvestment": "申请投资总额",
+      "clientNotes": "客户备注"
+    }
   },
   "modules": {
     "title": "模块",

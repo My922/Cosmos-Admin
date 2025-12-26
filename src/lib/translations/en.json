@@ -316,7 +316,15 @@
     "markComplete": "Mark Complete",
     "filterByStatus": "Filter by Status",
     "filterByType": "Filter by Type",
-    "filterByWorkflow": "Filter by Workflow"
+    "filterByWorkflow": "Filter by Workflow",
+    "productRequest": {
+      "requestedProducts": "Requested Products",
+      "minInvestment": "Min",
+      "requestedAmount": "Requested",
+      "totalMinInvestment": "Total Minimum Investment",
+      "totalRequestedInvestment": "Total Requested Investment",
+      "clientNotes": "Client Notes"
+    }
   },
   "modules": {
     "title": "Modules",
