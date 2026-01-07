@@ -217,6 +217,14 @@ export const api = {
     },
     deleteLogo: (id: string) => apiClient.delete(`/tenants/${id}/logo`),
     getLogoUrl: (id: string) => `${API_BASE_URL.replace('/api/v1', '')}/api/v1/tenants/${id}/logo`,
+    // Featured Products
+    getFeaturedProducts: (id: string) =>
+      apiClient.get<{ tenant_id: string; product_ids: string[] }>(`/tenants/${id}/featured-products`),
+    updateFeaturedProducts: (id: string, productIds: string[]) =>
+      apiClient.patch<{ tenant_id: string; product_ids: string[] }>(
+        `/tenants/${id}/featured-products`,
+        { product_ids: productIds }
+      ),
   },
 
   // Users

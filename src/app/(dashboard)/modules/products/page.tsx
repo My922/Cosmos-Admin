@@ -34,10 +34,11 @@ import {
   Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { useProducts, useMyTenantModules, useToggleProductVisibility, useDefaultProducts } from "@/hooks/use-api";
+import { useProducts, useMyTenantModules, useToggleProductVisibility, useDefaultProducts, useFeaturedProductIds, useUpdateFeaturedProducts } from "@/hooks/use-api";
 import { Product, RiskLevel, TenantModuleStatus } from "@/types";
 import { ProductDialog, DeleteProductDialog, PlatformProductDialog } from "@/components/products";
 import { useTranslation, useLocalizedField } from "@/lib/i18n";
+import { Star, StarOff } from "lucide-react";
 
 export default function ProductsPage() {
   const { t } = useTranslation();
@@ -69,6 +70,12 @@ export default function ProductsPage() {
   const { data: products, isLoading, error } = useProducts(queryParams);
   const { data: modulesData } = useMyTenantModules();
   const toggleVisibility = useToggleProductVisibility();
+  
+  // Featured products
+  const tenantId = user?.tenantId || "";
+  const { data: featuredData } = useFeaturedProductIds(tenantId, { enabled: !!tenantId && isTenantAdmin });
+  const updateFeatured = useUpdateFeaturedProducts(tenantId);
+  const featuredProductIds = featuredData?.product_ids || [];
 
   // Filter to only show enabled modules (core modules + enabled tenant modules)
   const enabledModules = (modulesData as TenantModuleStatus[] | undefined)?.filter(
@@ -108,6 +115,27 @@ export default function ProductsPage() {
       console.error("Failed to toggle visibility:", error);
     }
   };
+
+  const handleToggleFeatured = async (product: Product) => {
+    try {
+      const isFeatured = featuredProductIds.includes(product.id);
+      let newFeaturedIds: string[];
+      
+      if (isFeatured) {
+        // Remove from featured
+        newFeaturedIds = featuredProductIds.filter(id => id !== product.id);
+      } else {
+        // Add to featured
+        newFeaturedIds = [...featuredProductIds, product.id];
+      }
+      
+      await updateFeatured.mutateAsync(newFeaturedIds);
+    } catch (error) {
+      console.error("Failed to toggle featured:", error);
+    }
+  };
+
+  const isProductFeatured = (productId: string) => featuredProductIds.includes(productId);
 
   // Filter products by search query
   const filteredProducts = (products as Product[])?.filter((product) => {
@@ -307,6 +335,12 @@ export default function ProductsPage() {
                                 Hidden
                               </Badge>
                             )}
+                            {isProductFeatured(product.id) && (
+                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 border-amber-300">
+                                <Star className="mr-1 h-3 w-3 fill-current" />
+                                {t("products.featured")}
+                              </Badge>
+                            )}
                           </div>
                           {product.name_zh && (
                             <p className="text-sm text-muted-foreground">{product.name_zh}</p>
@@ -334,6 +368,19 @@ export default function ProductsPage() {
                                   <>
                                     <Eye className="mr-2 h-4 w-4" />
                                     Show
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleFeatured(product)}>
+                                {isProductFeatured(product.id) ? (
+                                  <>
+                                    <StarOff className="mr-2 h-4 w-4" />
+                                    {t("products.removeFromFeatured")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Star className="mr-2 h-4 w-4" />
+                                    {t("products.addToFeatured")}
                                   </>
                                 )}
                               </DropdownMenuItem>

@@ -374,7 +374,10 @@
     "productDescription": "描述",
     "productDescriptionZh": "描述（中文）",
     "visible": "可见",
-    "hidden": "隐藏"
+    "hidden": "隐藏",
+    "featured": "推荐",
+    "addToFeatured": "添加到推荐",
+    "removeFromFeatured": "从推荐移除"
   },
   "categories": {
     "title": "产品类别",

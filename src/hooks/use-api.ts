@@ -58,6 +58,26 @@ export function useDeleteTenantPermanent() {
   });
 }
 
+// Featured Products for Tenant
+export function useFeaturedProductIds(tenantId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["tenants", tenantId, "featuredProducts"],
+    queryFn: () => api.tenants.getFeaturedProducts(tenantId),
+    enabled: options?.enabled !== undefined ? options.enabled : !!tenantId,
+  });
+}
+
+export function useUpdateFeaturedProducts(tenantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productIds: string[]) =>
+      api.tenants.updateFeaturedProducts(tenantId, productIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants", tenantId, "featuredProducts"] });
+    },
+  });
+}
+
 // Users
 export function useUsers(params?: { skip?: number; limit?: number }) {
   return useQuery({

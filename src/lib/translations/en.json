@@ -374,7 +374,10 @@
     "productDescription": "Description",
     "productDescriptionZh": "Description (Chinese)",
     "visible": "Visible",
-    "hidden": "Hidden"
+    "hidden": "Hidden",
+    "featured": "Featured",
+    "addToFeatured": "Add to Featured",
+    "removeFromFeatured": "Remove from Featured"
   },
   "categories": {
     "title": "Product Categories",
