@@ -219,9 +219,9 @@ export function ModuleForm({
                   {...field}
                   disabled={isLoading}
                 >
-                  <option value="basic">Basic (Core)</option>
-                  <option value="investment">Investment (投资产品模组)</option>
-                  <option value="analytics">Analytics (分析模组)</option>
+                  <option value="basic">Basic - 基础模块 (non-investment)</option>
+                  <option value="investment">Investment - 投资产品模组 (investment)</option>
+                  <option value="analytics">Analytics - 分析模组 (non-investment)</option>
                 </select>
               </FormControl>
               <FormDescription>

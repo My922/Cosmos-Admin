@@ -36,10 +36,12 @@ import { useTranslation } from "@/lib/i18n";
 import { useLocalizedField } from "@/lib/i18n";
 
 // Category display info with translation keys
-const categoryConfig: Record<ModuleCategory, { labelKey: string; icon: React.ComponentType<{ className?: string }> }> = {
-  basic: { labelKey: "modules.basicModules", icon: Shield },
-  investment: { labelKey: "modules.investmentProducts", icon: TrendingUp },
-  analytics: { labelKey: "modules.analytics", icon: BarChart3 },
+// Investment-related modules go to "Lab" section on mobile app
+// Non-investment modules go to "Hub > Services" section on mobile app
+const categoryConfig: Record<ModuleCategory, { labelKey: string; icon: React.ComponentType<{ className?: string }>; isInvestment: boolean }> = {
+  basic: { labelKey: "modules.basicModulesNonInvestment", icon: Shield, isInvestment: false },
+  investment: { labelKey: "modules.investmentProductsInvestment", icon: TrendingUp, isInvestment: true },
+  analytics: { labelKey: "modules.analyticsNonInvestment", icon: BarChart3, isInvestment: false },
 };
 
 export default function ModulesPage() {
